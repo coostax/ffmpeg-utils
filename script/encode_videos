@@ -1,0 +1,90 @@
+#! /bin/bash
+
+################################################################################
+#
+# Author: Paulo Costa (coostax@gmail.com)
+# License: GNU/GPL, see http://www.gnu.org/copyleft/gpl.html
+# Date: 2015-07-17
+#
+# Encodes videos with ffmpeg using mmcat script.
+#  Searches for folders in the provided searchdir and for each folder
+# concatenates all video files contained on it into a new video file with
+# the same name as the folder
+#
+#
+#
+#
+# usage:
+#   encode_videos [-d <search dir> -f <format>]
+#       -d : directory to search for video contents
+#       -f : final format of the video file
+#
+# The install_dir argument is optional. If not set FFMpeg is installed in /opt/ffmpeg
+################################################################################
+
+function concat_encode {
+	file_list=''
+	file_count=0
+	for f in `ls $1*.{mp3,mp4,flv,mov,mkv,avi} 2>/dev/null`; do
+		file_list="$file_list $f";
+		file_count+=1;
+	done
+	if [[ $file_count == 0 ]]
+	then
+		echo "no files to encode in $1...."
+	else
+		if [[ $file_count == 1 ]]
+		then
+			echo "only one file found, converting with ffmpeg.."
+			#TODO call ffmpeg
+			echo "calling ffmpeg -i $file_list ... ${1::-1}.$2"
+		else
+			file_list="$file_list ${1::-1}.$2"
+			#TODO call mmcat
+			echo "calling mmcat $file_list"
+		fi
+	fi
+}
+
+while [[ $# > 0 ]]
+do
+key="$1"
+
+case $key in
+    -d|--directory)
+    BASEDIR="$2"
+    shift # past argument
+    ;;
+    -f|--filetype)
+    FILETYPE="$2"
+    shift # past argument
+    ;;
+    *)
+            # unknown option
+    ;;
+esac
+shift # past argument or value
+done
+
+if [ -z $BASEDIR ]; then
+	echo "please specify directory to search files for encoding...";
+	exit 0
+fi
+
+if [ -z $FILETYPE ]; then
+	echo "setting default filetype $FILETYPE";
+	FILETYPE='mp4'
+fi
+
+#check if is dir
+if [ ! -d $BASEDIR ]; then
+	echo "$BASEDIR is not a directory, specify directory";
+	exit 0;
+fi
+
+cd $BASEDIR
+
+#check for dirs
+for i in `ls -d */`; do
+	concat_encode $i $FILETYPE
+done
